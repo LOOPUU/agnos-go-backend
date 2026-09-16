@@ -1,64 +1,233 @@
 # Agnos Hospital Middleware API
 
-Back-end candidate assignment implemented with Go, Gin, Docker Compose, Nginx, and PostgreSQL.
+แบบทดสอบสำหรับผู้สมัครตำแหน่ง Back-end Developer พัฒนาด้วย **Go, Gin, PostgreSQL, Docker Compose และ Nginx**
 
-## Run
+โปรเจกต์นี้เป็น API Middleware สำหรับจัดการการยืนยันตัวตนของเจ้าหน้าที่ (Staff) และค้นหาข้อมูลผู้ป่วยผ่านระบบของโรงพยาบาล
+
+## เทคโนโลยีที่ใช้
+
+* Go 1.25
+* Gin Web Framework
+* PostgreSQL 16
+* Docker / Docker Compose
+* Nginx
+* RESTful API
+
+## การรันระบบ
+
+สร้างไฟล์ Environment Configuration:
 
 ```bash
 cp .env.example .env
+```
+
+Build และเริ่มต้น Service ทั้งหมด:
+
+```bash
 docker compose up -d --build
 ```
 
-API: `http://localhost:8080`
-
-## Test
+ตรวจสอบสถานะ Service:
 
 ```bash
-docker compose run --rm test
+docker compose ps
 ```
 
-For local Go development: `go mod tidy && go test ./...`.
+API สามารถเข้าถึงได้ที่:
 
-## Try
+```text
+http://localhost:8080
+```
+
+Docker Compose ประกอบด้วย:
+
+* Nginx
+* Go API
+* PostgreSQL
+* Hospital A Mock API
+
+## ขั้นตอนการทำงานของ API
+
+ขั้นตอนการทำงานหลักของระบบมีดังนี้:
+
+1. สร้างบัญชีเจ้าหน้าที่ (Staff)
+2. Login ด้วย Username และ Password ของเจ้าหน้าที่
+3. ระบบส่ง Authentication Token กลับมา
+4. นำ Token ไปใช้สำหรับเรียก Patient Search API
+5. Middleware ตรวจสอบว่าเจ้าหน้าที่ที่ Login อยู่สังกัดโรงพยาบาลใด
+6. ระบบค้นหาข้อมูลผู้ป่วยผ่านระบบของโรงพยาบาลที่เกี่ยวข้อง
+
+สำหรับ Assignment นี้ **Hospital A ถูกจำลองเป็น Local Mock API** เพื่อให้สามารถทดสอบการทำงานของระบบได้ โดยไม่จำเป็นต้องเชื่อมต่อกับระบบจริงของโรงพยาบาล
+
+## ทดลองเรียก API
+
+### 1. สร้าง Staff
 
 ```bash
-curl -X POST http://localhost:8080/staff/create -H 'Content-Type: application/json' \
-  -d '{"username":"naruemon","password":"StrongPass123!","hospital":"hospital-a"}'
+curl -X POST http://localhost:8080/staff/create \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username":"naruemon",
+    "password":"StrongPass123!",
+    "hospital":"hospital-a"
+  }'
+```
 
-curl -X POST http://localhost:8080/staff/login -H 'Content-Type: application/json' \
-  -d '{"username":"naruemon","password":"StrongPass123!","hospital":"hospital-a"}'
+### 2. Staff Login
 
-curl 'http://localhost:8080/patient/search?national_id=1101700203451' \
+```bash
+curl -X POST http://localhost:8080/staff/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username":"naruemon",
+    "password":"StrongPass123!",
+    "hospital":"hospital-a"
+  }'
+```
+
+หลังจาก Login สำเร็จ API จะส่ง Authentication Token กลับมา
+
+### 3. ค้นหาผู้ป่วย
+
+นำ Token ที่ได้รับจาก Login มาแทนที่ `REPLACE_WITH_TOKEN`
+
+```bash
+curl \
+  'http://localhost:8080/patient/search?national_id=1101700203451' \
   -H 'Authorization: Bearer REPLACE_WITH_TOKEN'
 ```
 
-## Documents
+## Unit Test
 
-- [Project Structure](docs/PROJECT_STRUCTURE.md)
-- [API Specification](docs/API_SPEC.md)
-- [ER Diagram](docs/ER_DIAGRAM.md)
-- [Combined Development Plan](docs/DEVELOPMENT_PLAN.md)
+ระบบมีการเขียน Unit Test สำหรับ API Handler Layer
 
-The combined development plan can be copied into the Google Doc required by the assignment.
+Unit Test สามารถรันผ่านได้สำเร็จโดยใช้ **Go 1.25 ผ่าน Docker**
 
-## GitHub submission
-
-Because the assignment is marked confidential, create a **private** GitHub repository and invite only the reviewers specified by Agnos.
+### รัน Unit Test
 
 ```bash
-git init
-git add .
-git commit -m "Complete Agnos back-end assignment"
-git branch -M main
-git remote add origin YOUR_PRIVATE_REPOSITORY_URL
-git push -u origin main
+docker run --rm \
+  -v "$PWD":/app \
+  -w /app \
+  golang:1.25 \
+  go test -v ./...
 ```
 
-## Security and design
+### ตรวจสอบ Test Coverage
 
-- bcrypt password hashing and random opaque tokens; raw tokens are not stored.
-- PostgreSQL parameterized queries.
-- Hospital isolation comes from the authenticated account, never a request parameter.
-- Nginx rate limiting and 1 MB body limit.
-- Local Hospital A mock makes review deterministic without proprietary access.
-- For production, restrict staff creation to admins, add audit logs, TLS, secret management, token revocation, and observability.
+```bash
+docker run --rm \
+  -v "$PWD":/app \
+  -w /app \
+  golang:1.25 \
+  go test -cover ./...
+```
+
+### ผลการทดสอบ
+
+```text
+Unit Test: Passed
+Handler Test Coverage: 78.0%
+```
+
+ผลการทดสอบของ Handler Package:
+
+```text
+ok  github.com/LOOPUU/agnos-go-backend/internal/handler
+coverage: 78.0% of statements
+```
+
+Package อื่น ๆ ปัจจุบันแสดง Coverage ที่ `0.0%` เนื่องจาก Unit Test ในเวอร์ชันปัจจุบันเน้นทดสอบในส่วนของ API Handler Layer
+
+## โครงสร้างโปรเจกต์
+
+โครงสร้างหลักของโปรเจกต์มีดังนี้:
+
+```text
+agnos-go-backend/
+├── cmd/
+│   └── api/
+│       └── main.go
+│
+├── internal/
+│   ├── client/
+│   ├── handler/
+│   ├── model/
+│   ├── repository/
+│   └── service/
+│
+├── docs/
+│   ├── PROJECT_STRUCTURE.md
+│   ├── API_SPEC.md
+│   ├── ER_DIAGRAM.md
+│   └── DEVELOPMENT_PLAN.md
+│
+├── docker-compose.yml
+├── Dockerfile
+├── go.mod
+├── go.sum
+└── README.md
+```
+
+### `cmd/api`
+
+เป็นจุดเริ่มต้น (Entry Point) ของ Application ทำหน้าที่เริ่มต้น Go API Server
+
+### `internal/handler`
+
+ทำหน้าที่รับ HTTP Request และส่ง HTTP Response ของแต่ละ API Endpoint
+
+### `internal/service`
+
+เก็บ Application Logic และ Business Logic ของระบบ
+
+### `internal/repository`
+
+ทำหน้าที่ติดต่อ PostgreSQL และจัดการการบันทึกหรือดึงข้อมูลจากฐานข้อมูล
+
+### `internal/model`
+
+เก็บโครงสร้างข้อมูลและ Model ที่ใช้ภายในระบบ
+
+### `internal/client`
+
+ทำหน้าที่ติดต่อระหว่าง Middleware กับระบบของโรงพยาบาล หรือ Mock Hospital Service
+
+## เอกสารประกอบ
+
+เอกสารเพิ่มเติมของโปรเจกต์อยู่ในโฟลเดอร์ `docs`:
+
+* [Project Structure](docs/PROJECT_STRUCTURE.md)
+* [API Specification](docs/API_SPEC.md)
+* [ER Diagram](docs/ER_DIAGRAM.md)
+* [Combined Development Plan](docs/DEVELOPMENT_PLAN.md)
+
+Development Plan สามารถใช้เป็นเอกสารประกอบสำหรับ Candidate Assignment ได้
+
+## ความปลอดภัยและการออกแบบระบบ
+
+โปรเจกต์มีการออกแบบด้าน Security และโครงสร้างระบบดังนี้:
+
+* Password ถูกเข้ารหัสแบบ Hash ด้วย bcrypt
+* ไม่มีการจัดเก็บ Authentication Token แบบ Raw โดยตรง
+* การ Query PostgreSQL ใช้ Parameterized Queries
+* โรงพยาบาลที่ Staff สามารถเข้าถึงได้จะถูกกำหนดจากบัญชี Staff ที่ผ่านการ Authentication แล้ว แทนที่จะรับชื่อโรงพยาบาลจาก Parameter ของ Patient Search API
+* Nginx มีการจำกัดอัตราการเรียก Request (Rate Limiting)
+* จำกัดขนาด Request Body ไว้ที่ 1 MB
+* Hospital A ถูกสร้างเป็น Local Mock Service เพื่อให้สามารถทดสอบระบบได้โดยไม่ต้องเข้าถึงระบบจริงของโรงพยาบาล
+
+หากนำระบบไปใช้งานใน Production ควรเพิ่มมาตรการดังต่อไปนี้:
+
+* จำกัดสิทธิ์การสร้าง Staff ให้เฉพาะ Administrator ที่ได้รับอนุญาต
+* เพิ่ม Audit Log
+* ใช้ HTTPS/TLS
+* จัดการ Secret อย่างปลอดภัย
+* เพิ่มระบบ Token Expiration และ Token Revocation
+* เพิ่ม Monitoring และ Observability
+* เพิ่ม Unit Test และ Integration Test ให้ครอบคลุมส่วนอื่น ๆ ของระบบมากขึ้น
+
+## การส่ง Assignment
+
+Repository นี้ประกอบด้วย Source Code, Docker Configuration, Unit Test, Mock Hospital Integration และเอกสารประกอบที่ใช้สำหรับ Back-end Candidate Assignment
+
+เนื่องจาก Assignment ถูกระบุว่าเป็น **ข้อมูล Confidential** จึงควรตั้ง Repository เป็น **Private** และอนุญาตให้เข้าถึงเฉพาะผู้ตรวจที่ Agnos ระบุเท่านั้น
