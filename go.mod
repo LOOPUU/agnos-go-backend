@@ -1,4 +1,4 @@
-module github.com/LOOPUU/agnos-hospital-middleware
+module github.com/LOOPUU/agnos-go-backend
 
 go 1.25
 
