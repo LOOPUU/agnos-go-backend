@@ -99,7 +99,7 @@ curl \
 
 ## Unit Test
 
-ระบบมีการเขียน Unit Test สำหรับ API Handler Layer
+ระบบมีการเขียน Unit Test สำหรับ **API Handler Layer** ครอบคลุมทั้งกรณีสำเร็จและกรณีเกิดข้อผิดพลาด
 
 Unit Test สามารถรันผ่านได้สำเร็จโดยใช้ **Go 1.25 ผ่าน Docker**
 
@@ -110,7 +110,7 @@ docker run --rm \
   -v "$PWD":/app \
   -w /app \
   golang:1.25 \
-  go test -v ./...
+  go test -v ./internal/handler
 ```
 
 ### ตรวจสอบ Test Coverage
@@ -120,28 +120,42 @@ docker run --rm \
   -v "$PWD":/app \
   -w /app \
   golang:1.25 \
-  go test -cover ./...
+  go test ./internal/handler -coverprofile=coverage.out
+```
+
+ดู Coverage แยกตาม Function:
+
+```bash
+docker run --rm \
+  -v "$PWD":/app \
+  -w /app \
+  golang:1.25 \
+  go tool cover -func=coverage.out
 ```
 
 ### ผลการทดสอบ
 
 ```text
 Unit Test: Passed
-Handler Test Coverage: 78.0%
+Handler Test Coverage: 100.0%
 ```
 
-ผลการทดสอบของ Handler Package:
+ผล Coverage ของ Handler:
 
 ```text
-ok  github.com/LOOPUU/agnos-go-backend/internal/handler
-coverage: 78.0% of statements
+fail          100.0%
+validate      100.0%
+CreateStaff   100.0%
+Login         100.0%
+Search        100.0%
+Router        100.0%
+
+total:        100.0%
 ```
 
-Package อื่น ๆ ปัจจุบันแสดง Coverage ที่ `0.0%` เนื่องจาก Unit Test ในเวอร์ชันปัจจุบันเน้นทดสอบในส่วนของ API Handler Layer
+Unit Test ในเวอร์ชันปัจจุบันเน้นทดสอบในส่วนของ **API Handler Layer**
 
 ## โครงสร้างโปรเจกต์
-
-โครงสร้างหลักของโปรเจกต์มีดังนี้:
 
 ```text
 agnos-go-backend/
@@ -152,6 +166,8 @@ agnos-go-backend/
 ├── internal/
 │   ├── client/
 │   ├── handler/
+│   │   ├── handler.go
+│   │   └── handler_test.go
 │   ├── model/
 │   ├── repository/
 │   └── service/
@@ -175,7 +191,7 @@ agnos-go-backend/
 
 ### `internal/handler`
 
-ทำหน้าที่รับ HTTP Request และส่ง HTTP Response ของแต่ละ API Endpoint
+ทำหน้าที่รับ HTTP Request และส่ง HTTP Response ของแต่ละ API Endpoint รวมถึงมี Unit Test สำหรับทดสอบ Handler
 
 ### `internal/service`
 
