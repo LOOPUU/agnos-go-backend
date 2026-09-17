@@ -245,5 +245,3 @@ Development Plan สามารถใช้เป็นเอกสารปร
 ## การส่ง Assignment
 
 Repository นี้ประกอบด้วย Source Code, Docker Configuration, Unit Test, Mock Hospital Integration และเอกสารประกอบที่ใช้สำหรับ Back-end Candidate Assignment
-
-เนื่องจาก Assignment ถูกระบุว่าเป็น **ข้อมูล Confidential** จึงควรตั้ง Repository เป็น **Private** และอนุญาตให้เข้าถึงเฉพาะผู้ตรวจที่ Agnos ระบุเท่านั้น
