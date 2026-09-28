@@ -1,6 +1,6 @@
 # Agnos Hospital Middleware API
 
-แบบทดสอบสำหรับผู้สมัครตำแหน่ง Back-end Developer พัฒนาด้วย **Go, Gin, PostgreSQL, Docker Compose และ Nginx**
+พัฒนาด้วย **Go, Gin, PostgreSQL, Docker Compose และ Nginx**
 
 โปรเจกต์นี้เป็น API Middleware สำหรับจัดการการยืนยันตัวตนของเจ้าหน้าที่ (Staff) และค้นหาข้อมูลผู้ป่วยผ่านระบบของโรงพยาบาล
 
