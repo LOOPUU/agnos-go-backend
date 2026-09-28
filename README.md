@@ -1,4 +1,4 @@
-# Agnos Hospital Middleware API
+# API
 
 พัฒนาด้วย **Go, Gin, PostgreSQL, Docker Compose และ Nginx**
 
